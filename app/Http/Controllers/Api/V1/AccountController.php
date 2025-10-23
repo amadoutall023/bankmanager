@@ -11,13 +11,129 @@ use App\Http\Requests\StoreAccountRequest;
 use App\Http\Requests\UpdateAccountRequest;
 use App\Traits\ApiResponseTrait;
 
+/**
+ * @OA\Info(
+ *     title="BankManager API",
+ *     version="1.0.0",
+ *     description="API pour la gestion des comptes bancaires"
+ * )
+ *
+ * @OA\Server(
+ *     url="http://localhost:8000/api/v1",
+ *     description="Serveur de développement"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Comptes",
+ *     description="Gestion des comptes bancaires"
+ * )
+ */
+
 class AccountController extends Controller
 {
     use ApiResponseTrait;
 
     /**
-     * Lister tous les comptes (Admin) ou les comptes du client connecté
-     * GET /api/v1/comptes
+     * @OA\Schema(
+     *     schema="Account",
+     *     type="object",
+     *     @OA\Property(property="id", type="string", format="uuid", description="ID unique du compte"),
+     *     @OA\Property(property="account_number", type="string", description="Numéro de compte unique"),
+     *     @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte"),
+     *     @OA\Property(property="balance", type="number", format="float", description="Solde du compte"),
+     *     @OA\Property(property="status", type="string", enum={"active", "inactive", "closed"}, description="Statut du compte"),
+     *     @OA\Property(
+     *         property="client",
+     *         type="object",
+     *         @OA\Property(property="id", type="integer", description="ID du client"),
+     *         @OA\Property(
+     *             property="user",
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", description="ID de l'utilisateur"),
+     *             @OA\Property(property="name", type="string", description="Nom du titulaire"),
+     *             @OA\Property(property="email", type="string", format="email", description="Email du titulaire")
+     *         )
+     *     ),
+     *     @OA\Property(property="created_at", type="string", format="date-time"),
+     *     @OA\Property(property="updated_at", type="string", format="date-time")
+     * )
+     *
+     * @OA\Schema(
+     *     schema="AccountCollection",
+     *     type="object",
+     *     @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Account")),
+     *     @OA\Property(
+     *         property="pagination",
+     *         type="object",
+     *         @OA\Property(property="currentPage", type="integer"),
+     *         @OA\Property(property="totalPages", type="integer"),
+     *         @OA\Property(property="totalItems", type="integer"),
+     *         @OA\Property(property="itemsPerPage", type="integer"),
+     *         @OA\Property(property="hasNext", type="boolean"),
+     *         @OA\Property(property="hasPrevious", type="boolean")
+     *     ),
+     *     @OA\Property(
+     *         property="links",
+     *         type="object",
+     *         @OA\Property(property="self", type="string"),
+     *         @OA\Property(property="next", type="string", nullable=true),
+     *         @OA\Property(property="first", type="string"),
+     *         @OA\Property(property="last", type="string")
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Get(
+     *     path="/comptes",
+     *     tags={"Comptes"},
+     *     summary="Lister tous les comptes bancaires",
+     *     description="Récupère la liste de tous les comptes avec possibilité de filtrage et pagination",
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Numéro de page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Nombre d'éléments par page (max 100)",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10, maximum=100)
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Type de compte",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"epargne", "cheque"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="statut",
+     *         in="query",
+     *         description="Statut du compte",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"actif", "bloque", "ferme"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Recherche par numéro de compte ou nom du titulaire",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des comptes récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object", description="Collection des comptes avec pagination")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request)
     {
@@ -85,8 +201,39 @@ class AccountController extends Controller
     }
 
     /**
-     * Créer un nouveau compte
-     * POST /api/v1/comptes
+     * @OA\Post(
+     *     path="/comptes",
+     *     tags={"Comptes"},
+     *     summary="Créer un nouveau compte bancaire",
+     *     description="Crée un nouveau compte bancaire pour un client existant",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"client_id", "type"},
+     *             @OA\Property(property="client_id", type="integer", description="ID du client"),
+     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte"),
+     *             @OA\Property(property="balance", type="number", format="float", description="Solde initial", default=0)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Compte créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object", description="Détails du compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function store(StoreAccountRequest $request)
     {
@@ -102,8 +249,36 @@ class AccountController extends Controller
     }
 
     /**
-     * Afficher un compte spécifique
-     * GET /api/v1/comptes/{id}
+     * @OA\Get(
+     *     path="/comptes/{id}",
+     *     tags={"Comptes"},
+     *     summary="Afficher un compte spécifique",
+     *     description="Récupère les détails d'un compte bancaire par son ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte (UUID)",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object", description="Détails du compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function show(string $id)
     {
@@ -116,8 +291,43 @@ class AccountController extends Controller
     }
 
     /**
-     * Mettre à jour un compte
-     * PUT /api/v1/comptes/{id}
+     * @OA\Put(
+     *     path="/comptes/{id}",
+     *     tags={"Comptes"},
+     *     summary="Modifier un compte bancaire",
+     *     description="Met à jour les informations d'un compte bancaire existant",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte (UUID)",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}),
+     *             @OA\Property(property="balance", type="number", format="float", minimum=0),
+     *             @OA\Property(property="status", type="string", enum={"active", "inactive", "closed"})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object", description="Détails du compte mis à jour")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function update(UpdateAccountRequest $request, string $id)
     {
@@ -134,8 +344,35 @@ class AccountController extends Controller
     }
 
     /**
-     * Supprimer un compte (Soft delete)
-     * DELETE /api/v1/comptes/{id}
+     * @OA\Delete(
+     *     path="/comptes/{id}",
+     *     tags={"Comptes"},
+     *     summary="Supprimer un compte bancaire",
+     *     description="Supprime un compte bancaire (soft delete)",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte (UUID)",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte supprimé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id)
     {

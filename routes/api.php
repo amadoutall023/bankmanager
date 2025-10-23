@@ -16,6 +16,15 @@ use App\Http\Middleware\RatingMiddleware;
 |
 */
 
+// Route pour servir la documentation Swagger JSON
+Route::get('/docs-json', function () {
+    $path = storage_path('api-docs/api-docs.json');
+    if (file_exists($path)) {
+        return response()->file($path, ['Content-Type' => 'application/json']);
+    }
+    return response()->json(['error' => 'Documentation not found'], 404);
+});
+
 // Routes API version 1
 Route::prefix('v1')->middleware([RatingMiddleware::class])->group(function () {
 
