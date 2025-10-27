@@ -13,7 +13,7 @@ class Account extends Model
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected $fillable = ['client_id','account_number','type','balance','status'];
+    protected $fillable = ['client_id','account_number','type','balance','status','blocked_at','blocking_expires_at','blocking_reason','is_archived','archived_at'];
 
     protected static function boot(): void
     {
@@ -46,5 +46,18 @@ class Account extends Model
 
     public function scopeByClient($query, $clientId) {
         return $query->where('client_id', $clientId);
+    }
+
+    public function scopeBlocked($query) {
+        return $query->where('status', 'inactive');
+    }
+
+    public function scopeExpiredBlocking($query) {
+        return $query->where('blocking_expires_at', '<=', now())
+                    ->whereNotNull('blocking_expires_at');
+    }
+
+    public function scopeNotArchived($query) {
+        return $query->where('is_archived', false);
     }
 }

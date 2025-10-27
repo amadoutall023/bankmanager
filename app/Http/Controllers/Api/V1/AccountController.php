@@ -15,6 +15,7 @@ use App\Http\Resources\AccountResource;
 use App\Http\Resources\AccountCollection;
 use App\Http\Requests\StoreAccountRequest;
 use App\Http\Requests\UpdateAccountRequest;
+use App\Http\Requests\BlockAccountRequest;
 use App\Traits\ApiResponseTrait;
 
 /**
@@ -461,6 +462,95 @@ class AccountController extends Controller
             new AccountResource($account),
             'Compte mis à jour avec succès'
         );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/comptes/{compteId}/bloquer",
+     *     tags={"Comptes"},
+     *     summary="Bloquer un compte bancaire",
+     *     description="Bloque un compte bancaire pour une durée déterminée avec un motif spécifique",
+     *     @OA\Parameter(
+     *         name="compteId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte (UUID)",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"dureeBlocage", "motifBlocage"},
+     *             @OA\Property(property="dureeBlocage", type="integer", description="Durée de blocage en jours", example=30, minimum=1, maximum=365),
+     *             @OA\Property(property="motifBlocage", type="string", description="Motif du blocage", example="Suspicion de fraude", maxLength=500)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte bloqué avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="statut", type="string", example="bloque"),
+     *                 @OA\Property(property="dateBlocage", type="string", format="date-time", example="2025-10-27T12:00:00Z"),
+     *                 @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-26T12:00:00Z"),
+     *                 @OA\Property(property="motifBlocage", type="string", example="Suspicion de fraude")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="dureeBlocage", type="array", @OA\Items(type="string"), example={"La durée de blocage est obligatoire"}),
+     *                 @OA\Property(property="motifBlocage", type="array", @OA\Items(type="string"), example={"Le motif de blocage est obligatoire"})
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function block(BlockAccountRequest $request, string $compteId)
+    {
+        $account = Account::notDeleted()->findOrFail($compteId);
+        $validated = $request->validated();
+
+        // Calculer la date d'expiration du blocage
+        $blockingExpiresAt = now()->addDays($validated['dureeBlocage']);
+
+        // Bloquer le compte
+        $account->update([
+            'status' => 'inactive',
+            'blocked_at' => now(),
+            'blocking_expires_at' => $blockingExpiresAt,
+            'blocking_reason' => $validated['motifBlocage'],
+        ]);
+
+        return $this->successResponse([
+            'id' => $account->id,
+            'numeroCompte' => $account->account_number,
+            'statut' => 'bloque',
+            'dateBlocage' => $account->blocked_at->format('Y-m-d\TH:i:s\Z'),
+            'dateFinBlocage' => $account->blocking_expires_at->format('Y-m-d\TH:i:s\Z'),
+            'motifBlocage' => $account->blocking_reason,
+        ], 'Compte bloqué avec succès');
     }
 
     /**

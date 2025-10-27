@@ -7,10 +7,6 @@
     },
     "servers": [
         {
-            "url": "https://bankmanager-1-0u7i.onrender.com/api/v1",
-            "description": "Serveur de production"
-        },
-        {
             "url": "http://localhost:8000/api/v1",
             "description": "Serveur de développement"
         }
@@ -552,6 +548,174 @@
                                                     },
                                                     "example": [
                                                         "L'email doit être valide"
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comptes/{compteId}/bloquer": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Bloquer un compte bancaire",
+                "description": "Bloque un compte bancaire pour une durée déterminée avec un motif spécifique",
+                "operationId": "33852fe3bba911abf86ccf366c4b52c6",
+                "parameters": [
+                    {
+                        "name": "compteId",
+                        "in": "path",
+                        "description": "ID du compte (UUID)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dureeBlocage",
+                                    "motifBlocage"
+                                ],
+                                "properties": {
+                                    "dureeBlocage": {
+                                        "description": "Durée de blocage en jours",
+                                        "type": "integer",
+                                        "maximum": 365,
+                                        "minimum": 1,
+                                        "example": 30
+                                    },
+                                    "motifBlocage": {
+                                        "description": "Motif du blocage",
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Suspicion de fraude"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte bloqué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte bloqué avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroCompte": {
+                                                    "type": "string",
+                                                    "example": "C00123456"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "bloque"
+                                                },
+                                                "dateBlocage": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-27T12:00:00Z"
+                                                },
+                                                "dateFinBlocage": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-26T12:00:00Z"
+                                                },
+                                                "motifBlocage": {
+                                                    "type": "string",
+                                                    "example": "Suspicion de fraude"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies sont invalides"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "dureeBlocage": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "La durée de blocage est obligatoire"
+                                                    ]
+                                                },
+                                                "motifBlocage": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le motif de blocage est obligatoire"
                                                     ]
                                                 }
                                             },

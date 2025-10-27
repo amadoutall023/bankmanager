@@ -61,6 +61,9 @@ Route::prefix('v1')->middleware([
     // Toutes les routes comptes sans restriction
     Route::apiResource('comptes', AccountController::class);
 
+    // Route pour bloquer un compte
+    Route::post('/comptes/{compteId}/bloquer', [AccountController::class, 'block']);
+
     // Route de test pour créer des comptes
     Route::post('/test/comptes', [AccountController::class, 'store']);
 
