@@ -382,11 +382,41 @@ class AccountController extends Controller
      */
     public function update(UpdateAccountRequest $request, string $id)
     {
-        $account = Account::notDeleted()->findOrFail($id);
-
+        $account = Account::with('client.user')->notDeleted()->findOrFail($id);
         $validated = $request->validated();
 
-        $account->update($validated);
+        // Mise à jour du titulaire si fourni
+        if (isset($validated['titulaire'])) {
+            $account->client->user->update([
+                'name' => $validated['titulaire']
+            ]);
+        }
+
+        // Mise à jour des informations client si fournies
+        if (isset($validated['informationsClient'])) {
+            $clientData = $validated['informationsClient'];
+
+            $userUpdateData = [];
+
+            if (isset($clientData['telephone'])) {
+                $userUpdateData['phone'] = $clientData['telephone'];
+            }
+
+            if (isset($clientData['email'])) {
+                $userUpdateData['email'] = $clientData['email'];
+            }
+
+            if (isset($clientData['password'])) {
+                $userUpdateData['password'] = Hash::make($clientData['password']);
+            }
+
+            if (!empty($userUpdateData)) {
+                $account->client->user->update($userUpdateData);
+            }
+        }
+
+        // Recharger l'account avec les relations mises à jour
+        $account->refresh();
 
         return $this->successResponse(
             new AccountResource($account),

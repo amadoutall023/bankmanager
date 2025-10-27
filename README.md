@@ -314,6 +314,45 @@ curl -X PUT "http://localhost:8000/api/v1/comptes/uuid-here" \
      -H "Accept: application/json"
 ```
 
+#### **PATCH /api/v1/comptes/{id}** - Modifier les informations d'un compte
+Modifie partiellement les informations du compte et du client associé. Tous les champs sont optionnels mais au moins un champ doit être fourni.
+
+```bash
+curl -X PATCH "http://localhost:8000/api/v1/comptes/uuid-here" \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json" \
+     -d '{
+       "titulaire": "Nouveau Nom",
+       "informationsClient": {
+         "telephone": "+221771234568",
+         "email": "nouveau.email@example.com",
+         "password": "NouveauPass123!@#"
+       }
+     }'
+```
+
+**Réponse attendue (200 OK)** :
+```json
+{
+  "success": true,
+  "message": "Compte mis à jour avec succès",
+  "data": {
+    "id": "uuid-here",
+    "numeroCompte": "C00123456",
+    "titulaire": "Nouveau Nom",
+    "type": "cheque",
+    "solde": 15000,
+    "devise": "FCFA",
+    "dateCreation": "2023-03-15T00:00:00Z",
+    "statut": "actif",
+    "metadata": {
+      "derniereModification": "2025-10-27T10:30:00Z",
+      "version": 1
+    }
+  }
+}
+```
+
 #### **DELETE /api/v1/comptes/{id}** - Supprimer un compte
 ```bash
 curl -X DELETE "http://localhost:8000/api/v1/comptes/uuid-here" \
