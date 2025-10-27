@@ -260,13 +260,13 @@
                     }
                 }
             },
-            "put": {
+            "delete": {
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Modifier un compte bancaire",
-                "description": "Met à jour les informations d'un compte bancaire existant",
-                "operationId": "3825f0404bf8745d5f97218cb24f07d1",
+                "summary": "Fermer un compte bancaire",
+                "description": "Effectue une suppression logique (soft delete) du compte bancaire en le marquant comme fermé",
+                "operationId": "bdb60995580a5ea81b3fd0aeacaef099",
                 "parameters": [
                     {
                         "name": "id",
@@ -279,40 +279,9 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "epargne",
-                                            "cheque"
-                                        ]
-                                    },
-                                    "balance": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "minimum": 0
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "active",
-                                            "inactive",
-                                            "closed"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Compte mis à jour avec succès",
+                        "description": "Compte fermé avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -322,10 +291,30 @@
                                             "example": true
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Compte supprimé avec succès"
                                         },
                                         "data": {
-                                            "description": "Détails du compte mis à jour",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroCompte": {
+                                                    "type": "string",
+                                                    "example": "C00123456"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "ferme"
+                                                },
+                                                "dateFermeture": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-19T11:15:00Z"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -345,7 +334,8 @@
                                             "example": false
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Compte non trouvé"
                                         }
                                     },
                                     "type": "object"
@@ -355,13 +345,13 @@
                     }
                 }
             },
-            "delete": {
+            "patch": {
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Supprimer un compte bancaire",
-                "description": "Supprime un compte bancaire (soft delete)",
-                "operationId": "bdb60995580a5ea81b3fd0aeacaef099",
+                "summary": "Modifier les informations d'un compte bancaire",
+                "description": "Met à jour les informations du titulaire et/ou les informations client d'un compte bancaire existant",
+                "operationId": "0ca05b95099c8e31506ca3c2cc82ab14",
                 "parameters": [
                     {
                         "name": "id",
@@ -374,9 +364,48 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "titulaire": {
+                                        "description": "Nouveau nom du titulaire",
+                                        "type": "string",
+                                        "example": "Cheikh Sy"
+                                    },
+                                    "informationsClient": {
+                                        "description": "Informations client à mettre à jour",
+                                        "properties": {
+                                            "telephone": {
+                                                "description": "Nouveau numéro de téléphone",
+                                                "type": "string",
+                                                "example": "+221771234567"
+                                            },
+                                            "email": {
+                                                "description": "Nouvelle adresse email",
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "cheikh.sy@example.com"
+                                            },
+                                            "password": {
+                                                "description": "Nouveau mot de passe",
+                                                "type": "string",
+                                                "example": "nouveauMotDePasse123"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Compte supprimé avec succès",
+                        "description": "Informations du compte mises à jour avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -386,7 +415,71 @@
                                             "example": true
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Informations du compte mises à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroCompte": {
+                                                    "type": "string",
+                                                    "example": "C00123456"
+                                                },
+                                                "titulaire": {
+                                                    "type": "string",
+                                                    "example": "Cheikh Sy"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "epargne",
+                                                        "cheque"
+                                                    ],
+                                                    "example": "cheque"
+                                                },
+                                                "solde": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 500000
+                                                },
+                                                "devise": {
+                                                    "type": "string",
+                                                    "example": "FCFA"
+                                                },
+                                                "dateCreation": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-19T10:30:00Z"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "actif",
+                                                        "bloque",
+                                                        "ferme"
+                                                    ],
+                                                    "example": "actif"
+                                                },
+                                                "metadata": {
+                                                    "properties": {
+                                                        "derniereModification": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-19T11:15:00Z"
+                                                        },
+                                                        "version": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -405,7 +498,60 @@
                                             "example": false
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Compte non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies sont invalides"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "titulaire": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le nom du titulaire est requis"
+                                                    ]
+                                                },
+                                                "informationsClient.telephone": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le téléphone doit être un numéro sénégalais valide"
+                                                    ]
+                                                },
+                                                "informationsClient.email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "L'email doit être valide"
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

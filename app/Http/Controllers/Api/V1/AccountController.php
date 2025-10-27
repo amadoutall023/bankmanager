@@ -342,11 +342,11 @@ class AccountController extends Controller
     }
 
     /**
-     * @OA\Put(
+     * @OA\Patch(
      *     path="/comptes/{id}",
      *     tags={"Comptes"},
-     *     summary="Modifier un compte bancaire",
-     *     description="Met à jour les informations d'un compte bancaire existant",
+     *     summary="Modifier les informations d'un compte bancaire",
+     *     description="Met à jour les informations du titulaire et/ou les informations client d'un compte bancaire existant",
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -355,19 +355,43 @@ class AccountController extends Controller
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\RequestBody(
+     *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}),
-     *             @OA\Property(property="balance", type="number", format="float", minimum=0),
-     *             @OA\Property(property="status", type="string", enum={"active", "inactive", "closed"})
+     *             @OA\Property(property="titulaire", type="string", description="Nouveau nom du titulaire", example="Cheikh Sy"),
+     *             @OA\Property(
+     *                 property="informationsClient",
+     *                 type="object",
+     *                 description="Informations client à mettre à jour",
+     *                 @OA\Property(property="telephone", type="string", description="Nouveau numéro de téléphone", example="+221771234567"),
+     *                 @OA\Property(property="email", type="string", format="email", description="Nouvelle adresse email", example="cheikh.sy@example.com"),
+     *                 @OA\Property(property="password", type="string", description="Nouveau mot de passe", example="nouveauMotDePasse123")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Compte mis à jour avec succès",
+     *         description="Informations du compte mises à jour avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="object", description="Détails du compte mis à jour")
+     *             @OA\Property(property="message", type="string", example="Informations du compte mises à jour avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                 @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="cheque"),
+     *                 @OA\Property(property="solde", type="number", format="float", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                 @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, example="actif"),
+     *                 @OA\Property(
+     *                     property="metadata",
+     *                     type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-19T11:15:00Z"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -375,7 +399,22 @@ class AccountController extends Controller
      *         description="Compte non trouvé",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string")
+     *             @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="titulaire", type="array", @OA\Items(type="string"), example={"Le nom du titulaire est requis"}),
+     *                 @OA\Property(property="informationsClient.telephone", type="array", @OA\Items(type="string"), example={"Le téléphone doit être un numéro sénégalais valide"}),
+     *                 @OA\Property(property="informationsClient.email", type="array", @OA\Items(type="string"), example={"L'email doit être valide"})
+     *             )
      *         )
      *     )
      * )
@@ -428,8 +467,8 @@ class AccountController extends Controller
      * @OA\Delete(
      *     path="/comptes/{id}",
      *     tags={"Comptes"},
-     *     summary="Supprimer un compte bancaire",
-     *     description="Supprime un compte bancaire (soft delete)",
+     *     summary="Fermer un compte bancaire",
+     *     description="Effectue une suppression logique (soft delete) du compte bancaire en le marquant comme fermé",
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -439,10 +478,18 @@ class AccountController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Compte supprimé avec succès",
+     *         description="Compte fermé avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string")
+     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="statut", type="string", example="ferme"),
+     *                 @OA\Property(property="dateFermeture", type="string", format="date-time", example="2025-10-19T11:15:00Z")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -450,7 +497,7 @@ class AccountController extends Controller
      *         description="Compte non trouvé",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string")
+     *             @OA\Property(property="message", type="string", example="Compte non trouvé")
      *         )
      *     )
      * )
