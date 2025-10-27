@@ -9,6 +9,10 @@
         {
             "url": "http://localhost:8000/api/v1",
             "description": "Serveur de développement"
+        },
+        {
+            "url": "https://bankmanager-1-0u7i.onrender.com/api/v1",
+            "description": "Serveur de production"
         }
     ],
     "paths": {
