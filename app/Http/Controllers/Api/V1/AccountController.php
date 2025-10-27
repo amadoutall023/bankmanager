@@ -458,12 +458,17 @@ class AccountController extends Controller
     public function destroy(string $id)
     {
         $account = Account::notDeleted()->findOrFail($id);
+
+        // Effectuer le soft delete
         $account->delete();
 
-        return $this->successResponse(
-            null,
-            'Compte supprimé avec succès'
-        );
+        // Retourner la réponse avec les informations demandées
+        return $this->successResponse([
+            'id' => $account->id,
+            'numeroCompte' => $account->account_number,
+            'statut' => 'ferme',
+            'dateFermeture' => now()->format('Y-m-d\TH:i:s\Z')
+        ], 'Compte supprimé avec succès');
     }
 
     /**

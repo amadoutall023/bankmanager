@@ -3,7 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Middleware\RatingMiddleware;
+use App\Http\Middleware\AuthMiddleware;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\LoggingMiddleware;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,8 +29,11 @@ Route::get('/docs-json', function () {
     return response()->json(['error' => 'Documentation not found'], 404);
 });
 
-// Routes API version 1
-Route::prefix('v1')->middleware([RatingMiddleware::class])->group(function () {
+// Routes API version 1 (simplifiées sans authentification)
+Route::prefix('v1')->middleware([
+    RatingMiddleware::class,
+    LoggingMiddleware::class
+])->group(function () {
 
     /**
      * Routes pour les comptes bancaires
@@ -34,7 +41,7 @@ Route::prefix('v1')->middleware([RatingMiddleware::class])->group(function () {
      * GET /api/v1/comptes - Lister tous les comptes (Admin: tous, Client: les siens)
      * POST /api/v1/comptes - Créer un compte (Admin seulement)
      * GET /api/v1/comptes/{id} - Afficher un compte spécifique
-     * PUT /api/v1/comptes/{id} - Modifier un compte (Admin seulement)
+     * PATCH /api/v1/comptes/{id} - Modifier un compte (Admin seulement)
      * DELETE /api/v1/comptes/{id} - Supprimer un compte (Admin seulement)
      *
      * Query Parameters pour GET /api/v1/comptes:
@@ -46,6 +53,18 @@ Route::prefix('v1')->middleware([RatingMiddleware::class])->group(function () {
      * - sort: tri (dateCreation, solde, titulaire)
      * - order: ordre (asc, desc)
      */
+    // Toutes les routes comptes sans restriction
     Route::apiResource('comptes', AccountController::class);
 
+    // Route de test pour créer des comptes
+    Route::post('/test/comptes', [AccountController::class, 'store']);
+
+});
+
+// Route temporaire pour tester la création de compte sans authentification
+Route::prefix('v1')->middleware([
+    RatingMiddleware::class,
+    LoggingMiddleware::class
+])->group(function () {
+    Route::post('/test/comptes', [AccountController::class, 'store']);
 });
