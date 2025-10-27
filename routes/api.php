@@ -24,7 +24,12 @@ use App\Http\Middleware\LoggingMiddleware;
 Route::get('/docs-json', function () {
     $path = storage_path('api-docs/api-docs.json');
     if (file_exists($path)) {
-        return response()->file($path, ['Content-Type' => 'application/json']);
+        return response()->file($path, [
+            'Content-Type' => 'application/json',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+        ]);
     }
     return response()->json(['error' => 'Documentation not found'], 404);
 });
