@@ -119,6 +119,207 @@ curl -X GET "https://votre-app.onrender.com/api/v1/comptes?page=1&limit=5" \
      -H "Accept: application/json"
 ```
 
+## 📖 API Documentation - Tests avec Postman
+
+### Configuration de Base
+- **Base URL** : `http://localhost:8000/api/v1` (local) ou `https://votre-app.onrender.com/api/v1` (production)
+- **Headers communs** :
+  - `Content-Type: application/json`
+  - `Accept: application/json`
+
+### 🆕 Endpoint : Création de Compte Bancaire
+
+#### **POST /api/v1/comptes**
+Crée un nouveau compte bancaire. Si le client n'existe pas, il est créé automatiquement avec génération de mot de passe et code de vérification.
+
+#### ✅ Exemple 1 : Création avec nouveau client
+```json
+{
+  "method": "POST",
+  "url": "http://localhost:8000/api/v1/comptes",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "body": {
+    "type": "cheque",
+    "soldeInitial": 500000,
+    "devise": "FCFA",
+    "solde": 10000,
+    "client": {
+      "titulaire": "Hawa BB Wane",
+      "email": "hawa.wane@example.com",
+      "telephone": "+221771234567",
+      "adresse": "Dakar, Sénégal"
+    }
+  }
+}
+```
+
+**Réponse attendue (201 Created)** :
+```json
+{
+  "success": true,
+  "message": "Compte créé avec succès",
+  "data": {
+    "id": "uuid-generated",
+    "numeroCompte": "C00123456",
+    "titulaire": "Hawa BB Wane",
+    "type": "cheque",
+    "solde": 10000,
+    "devise": "FCFA",
+    "dateCreation": "2025-10-27T10:30:00Z",
+    "statut": "actif",
+    "metadata": {
+      "derniereModification": "2025-10-27T10:30:00Z",
+      "version": 1
+    }
+  }
+}
+```
+
+#### ✅ Exemple 2 : Création avec client existant
+```json
+{
+  "method": "POST",
+  "url": "http://localhost:8000/api/v1/comptes",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "body": {
+    "type": "epargne",
+    "soldeInitial": 100000,
+    "devise": "FCFA",
+    "solde": 25000,
+    "client": {
+      "id": 1
+    }
+  }
+}
+```
+
+#### ❌ Exemple 3 : Erreur de validation (solde insuffisant)
+```json
+{
+  "method": "POST",
+  "url": "http://localhost:8000/api/v1/comptes",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "body": {
+    "type": "cheque",
+    "soldeInitial": 5000,
+    "devise": "FCFA",
+    "solde": 5000,
+    "client": {
+      "titulaire": "Test User",
+      "email": "test@example.com",
+      "telephone": "+221781234567",
+      "adresse": "Dakar, Sénégal"
+    }
+  }
+}
+```
+
+**Réponse d'erreur (400 Bad Request)** :
+```json
+{
+  "success": false,
+  "message": "Les données fournies sont invalides",
+  "errors": {
+    "soldeInitial": ["Le solde initial doit être supérieur ou égal à 10000"],
+    "solde": ["Le solde doit être supérieur ou égal à 10000"]
+  }
+}
+```
+
+#### ❌ Exemple 4 : Erreur téléphone invalide
+```json
+{
+  "method": "POST",
+  "url": "http://localhost:8000/api/v1/comptes",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "body": {
+    "type": "cheque",
+    "soldeInitial": 15000,
+    "devise": "FCFA",
+    "solde": 15000,
+    "client": {
+      "titulaire": "Test User",
+      "email": "test@example.com",
+      "telephone": "+221123456789",
+      "adresse": "Dakar, Sénégal"
+    }
+  }
+}
+```
+
+**Réponse d'erreur** :
+```json
+{
+  "success": false,
+  "message": "Les données fournies sont invalides",
+  "errors": {
+    "client.telephone": ["Le numéro de téléphone doit être un numéro sénégalais valide (+22177XXXXXXX, +22178XXXXXXX, etc.)"]
+  }
+}
+```
+
+### 📋 Règles de Validation
+
+| Champ | Règle | Description |
+|-------|-------|-------------|
+| `type` | `required\|in:epargne,cheque` | Type de compte obligatoire |
+| `soldeInitial` | `required\|numeric\|min:10000` | Minimum 10 000 FCFA |
+| `devise` | `required\|in:FCFA` | Uniquement FCFA |
+| `solde` | `required\|numeric\|min:10000` | Minimum 10 000 FCFA |
+| `client.id` | `nullable\|exists:clients,id` | ID client existant (optionnel) |
+| `client.titulaire` | `required_if:client.id,null\|string\|max:255` | Nom requis si nouveau client |
+| `client.email` | `required_if:client.id,null\|email\|unique:users,email` | Email unique requis |
+| `client.telephone` | `required_if:client.id,null\|regex:/^\+221(77\|78\|70\|76\|75\|33)[0-9]{7}$/` | Téléphone sénégalais unique |
+| `client.adresse` | `required_if:client.id,null\|string\|max:500` | Adresse requise |
+
+### 🔧 Téléphones Sénégalais Valides
+- `+22177XXXXXXX` (Orange)
+- `+22178XXXXXXX` (Free)
+- `+22170XXXXXXX` (Expresso)
+- `+22176XXXXXXX` (Promobile)
+- `+22175XXXXXXX` (Chaka)
+- `+22133XXXXXXX` (fixe Dakar)
+
+### 📊 Autres Endpoints Disponibles
+
+#### **GET /api/v1/comptes** - Lister les comptes
+```bash
+curl -X GET "http://localhost:8000/api/v1/comptes?page=1&limit=10&type=cheque&statut=actif" \
+     -H "Accept: application/json"
+```
+
+#### **GET /api/v1/comptes/{id}** - Détails d'un compte
+```bash
+curl -X GET "http://localhost:8000/api/v1/comptes/uuid-here" \
+     -H "Accept: application/json"
+```
+
+#### **PUT /api/v1/comptes/{id}** - Modifier un compte
+```bash
+curl -X PUT "http://localhost:8000/api/v1/comptes/uuid-here" \
+     -H "Content-Type: application/json" \
+     -d '{"type": "epargne", "balance": 50000}' \
+     -H "Accept: application/json"
+```
+
+#### **DELETE /api/v1/comptes/{id}** - Supprimer un compte
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/comptes/uuid-here" \
+     -H "Accept: application/json"
+```
+
 ### Optimisations pour la Production
 
 ```bash

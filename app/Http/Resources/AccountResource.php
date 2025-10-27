@@ -16,20 +16,17 @@ class AccountResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'account_number' => $this->account_number,
+            'numeroCompte' => $this->account_number,
+            'titulaire' => $this->client->user->name,
             'type' => $this->type,
-            'balance' => $this->balance,
-            'status' => $this->status,
-            'client' => [
-                'id' => $this->client->id,
-                'user' => [
-                    'id' => $this->client->user->id,
-                    'name' => $this->client->user->name,
-                    'email' => $this->client->user->email,
-                ],
+            'solde' => $this->balance,
+            'devise' => 'FCFA',
+            'dateCreation' => $this->created_at->format('Y-m-d\TH:i:s\Z'),
+            'statut' => $this->status === 'active' ? 'actif' : ($this->status === 'inactive' ? 'bloque' : 'ferme'),
+            'metadata' => [
+                'derniereModification' => $this->updated_at->format('Y-m-d\TH:i:s\Z'),
+                'version' => 1,
             ],
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
         ];
     }
 }

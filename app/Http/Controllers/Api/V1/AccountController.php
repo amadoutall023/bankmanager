@@ -4,7 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Client;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Http\Resources\AccountResource;
 use App\Http\Resources\AccountCollection;
 use App\Http\Requests\StoreAccountRequest;
@@ -239,7 +245,52 @@ class AccountController extends Controller
     {
         $validated = $request->validated();
 
-        $account = Account::create($validated);
+        // Vérifier si le client existe ou doit être créé
+        $clientId = $validated['client']['id'] ?? null;
+        $client = null;
+
+        if ($clientId) {
+            // Utiliser le client existant
+            $client = Client::findOrFail($clientId);
+        } else {
+            // Créer un nouveau client et utilisateur
+            $generatedPassword = $this->generatePassword();
+            $verificationCode = $this->generateVerificationCode();
+
+            $user = User::create([
+                'name' => $validated['client']['titulaire'],
+                'email' => $validated['client']['email'],
+                'password' => Hash::make($generatedPassword),
+                'phone' => $validated['client']['telephone'],
+                'address' => $validated['client']['adresse'],
+                'role' => 'client',
+                'verification_code' => $verificationCode,
+                'verification_code_expires_at' => now()->addMinutes(15),
+                'is_verified' => false,
+            ]);
+
+            $client = Client::create([
+                'user_id' => $user->id,
+            ]);
+
+            // Envoyer email d'authentification
+            $this->sendAuthenticationEmail($user, $generatedPassword);
+
+            // Envoyer SMS avec le code
+            $this->sendVerificationSMS($user, $verificationCode);
+        }
+
+        // Générer numéro de compte unique
+        $accountNumber = $this->generateAccountNumber();
+
+        // Créer le compte
+        $account = Account::create([
+            'client_id' => $client->id,
+            'account_number' => $accountNumber,
+            'type' => $validated['type'],
+            'balance' => $validated['solde'],
+            'status' => 'active',
+        ]);
 
         return $this->successResponse(
             new AccountResource($account),
@@ -383,5 +434,59 @@ class AccountController extends Controller
             null,
             'Compte supprimé avec succès'
         );
+    }
+
+    /**
+     * Génère un mot de passe aléatoire sécurisé
+     */
+    private function generatePassword(): string
+    {
+        return Str::random(12) . rand(100, 999);
+    }
+
+    /**
+     * Génère un code de vérification à 6 chiffres
+     */
+    private function generateVerificationCode(): string
+    {
+        return str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Génère un numéro de compte unique
+     */
+    private function generateAccountNumber(): string
+    {
+        do {
+            $number = 'C' . str_pad(rand(10000000, 99999999), 8, '0', STR_PAD_LEFT);
+        } while (Account::where('account_number', $number)->exists());
+
+        return $number;
+    }
+
+    /**
+     * Envoie un email d'authentification avec le mot de passe
+     */
+    private function sendAuthenticationEmail(User $user, string $password): void
+    {
+        // Pour cette implémentation simplifiée, on simule l'envoi
+        // En production, utiliser un service d'email comme Mailgun, SendGrid, etc.
+        Log::info("Email d'authentification envoyé à {$user->email} avec mot de passe: {$password}");
+
+        // Exemple avec Laravel Mail (à implémenter):
+        // Mail::to($user->email)->send(new AuthenticationEmail($user, $password));
+    }
+
+    /**
+     * Envoie un SMS avec le code de vérification
+     */
+    private function sendVerificationSMS(User $user, string $code): void
+    {
+        // Pour cette implémentation simplifiée, on simule l'envoi
+        // En production, utiliser un service SMS comme Twilio, Africa's Talking, etc.
+        Log::info("SMS envoyé au {$user->phone} avec code: {$code}");
+
+        // Exemple avec un service SMS (à implémenter):
+        // $smsService->send($user->phone, "Votre code de vérification: {$code}");
     }
 }
