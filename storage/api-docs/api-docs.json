@@ -610,7 +610,7 @@
                     "Comptes"
                 ],
                 "summary": "Bloquer un compte bancaire",
-                "description": "Bloque un compte bancaire pour une durée déterminée avec un motif spécifique",
+                "description": "Bloque un compte bancaire de type épargne actif pour une durée déterminée avec un motif spécifique",
                 "operationId": "33852fe3bba911abf86ccf366c4b52c6",
                 "parameters": [
                     {
@@ -630,10 +630,17 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "dateDebutBlocage",
                                     "dureeBlocage",
                                     "motifBlocage"
                                 ],
                                 "properties": {
+                                    "dateDebutBlocage": {
+                                        "description": "Date de début du blocage (YYYY-MM-DD)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-10-29"
+                                    },
                                     "dureeBlocage": {
                                         "description": "Durée de blocage en jours",
                                         "type": "integer",
@@ -727,7 +734,7 @@
                         }
                     },
                     "422": {
-                        "description": "Erreur de validation",
+                        "description": "Erreur de validation ou compte non éligible au blocage",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -738,7 +745,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Les données fournies sont invalides"
+                                            "example": "Seuls les comptes épargne peuvent être bloqués"
                                         },
                                         "errors": {
                                             "properties": {

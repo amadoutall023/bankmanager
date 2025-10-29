@@ -22,6 +22,7 @@ class BlockAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'dateDebutBlocage' => 'required|date|after_or_equal:today',
             'dureeBlocage' => 'required|integer|min:1|max:365', // Durée en jours
             'motifBlocage' => 'required|string|max:500',
         ];
@@ -30,6 +31,9 @@ class BlockAccountRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'dateDebutBlocage.required' => 'La date de début de blocage est obligatoire',
+            'dateDebutBlocage.date' => 'La date de début de blocage doit être une date valide',
+            'dateDebutBlocage.after_or_equal' => 'La date de début de blocage ne peut pas être dans le passé',
             'dureeBlocage.required' => 'La durée de blocage est obligatoire',
             'dureeBlocage.integer' => 'La durée de blocage doit être un nombre entier',
             'dureeBlocage.min' => 'La durée de blocage doit être d\'au moins 1 jour',

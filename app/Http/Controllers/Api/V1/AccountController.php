@@ -47,28 +47,36 @@ class AccountController extends Controller
 
     /**
      * @OA\Schema(
-     *     schema="Account",
-     *     type="object",
-     *     @OA\Property(property="id", type="string", format="uuid", description="ID unique du compte"),
-     *     @OA\Property(property="account_number", type="string", description="Numéro de compte unique"),
-     *     @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte"),
-     *     @OA\Property(property="balance", type="number", format="float", description="Solde du compte"),
-     *     @OA\Property(property="status", type="string", enum={"active", "inactive", "closed"}, description="Statut du compte"),
-     *     @OA\Property(
-     *         property="client",
-     *         type="object",
-     *         @OA\Property(property="id", type="integer", description="ID du client"),
-     *         @OA\Property(
-     *             property="user",
-     *             type="object",
-     *             @OA\Property(property="id", type="integer", description="ID de l'utilisateur"),
-     *             @OA\Property(property="name", type="string", description="Nom du titulaire"),
-     *             @OA\Property(property="email", type="string", format="email", description="Email du titulaire")
-     *         )
-     *     ),
-     *     @OA\Property(property="created_at", type="string", format="date-time"),
-     *     @OA\Property(property="updated_at", type="string", format="date-time")
-     * )
+      *     schema="Account",
+      *     type="object",
+      *     @OA\Property(property="id", type="string", format="uuid", description="ID unique du compte"),
+      *     @OA\Property(property="account_number", type="string", description="Numéro de compte unique"),
+      *     @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte"),
+      *     @OA\Property(property="balance", type="number", format="float", description="Solde du compte"),
+      *     @OA\Property(property="status", type="string", enum={"active", "inactive", "closed"}, description="Statut du compte"),
+      *     @OA\Property(
+      *         property="client",
+      *         type="object",
+      *         @OA\Property(property="id", type="integer", description="ID du client"),
+      *         @OA\Property(
+      *             property="user",
+      *             type="object",
+      *             @OA\Property(property="id", type="integer", description="ID de l'utilisateur"),
+      *             @OA\Property(property="name", type="string", description="Nom du titulaire"),
+      *             @OA\Property(property="email", type="string", format="email", description="Email du titulaire")
+      *         )
+      *     ),
+      *     @OA\Property(
+      *         property="informationsBlocage",
+      *         type="object",
+      *         description="Informations de blocage (présent uniquement si le compte est bloqué)",
+      *         @OA\Property(property="dateDebutBlocage", type="string", format="date-time", description="Date de début du blocage"),
+      *         @OA\Property(property="dateFinBlocage", type="string", format="date-time", description="Date de fin du blocage"),
+      *         @OA\Property(property="motifBlocage", type="string", description="Motif du blocage")
+      *     ),
+      *     @OA\Property(property="created_at", type="string", format="date-time"),
+      *     @OA\Property(property="updated_at", type="string", format="date-time")
+      * )
      *
      * @OA\Schema(
      *     schema="AccountCollection",
@@ -483,91 +491,105 @@ class AccountController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/comptes/{compteId}/bloquer",
-     *     tags={"Comptes"},
-     *     summary="Bloquer un compte bancaire",
-     *     description="Bloque un compte bancaire pour une durée déterminée avec un motif spécifique",
-     *     @OA\Parameter(
-     *         name="compteId",
-     *         in="path",
-     *         required=true,
-     *         description="ID du compte (UUID)",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"dureeBlocage", "motifBlocage"},
-     *             @OA\Property(property="dureeBlocage", type="integer", description="Durée de blocage en jours", example=30, minimum=1, maximum=365),
-     *             @OA\Property(property="motifBlocage", type="string", description="Motif du blocage", example="Suspicion de fraude", maxLength=500)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Compte bloqué avec succès",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
-     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
-     *                 @OA\Property(property="statut", type="string", example="bloque"),
-     *                 @OA\Property(property="dateBlocage", type="string", format="date-time", example="2025-10-27T12:00:00Z"),
-     *                 @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-26T12:00:00Z"),
-     *                 @OA\Property(property="motifBlocage", type="string", example="Suspicion de fraude")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Compte non trouvé",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Compte non trouvé")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Erreur de validation",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(property="dureeBlocage", type="array", @OA\Items(type="string"), example={"La durée de blocage est obligatoire"}),
-     *                 @OA\Property(property="motifBlocage", type="array", @OA\Items(type="string"), example={"Le motif de blocage est obligatoire"})
-     *             )
-     *         )
-     *     )
-     * )
+      *     path="/comptes/{compteId}/bloquer",
+      *     tags={"Comptes"},
+      *     summary="Bloquer un compte bancaire",
+      *     description="Bloque un compte bancaire de type épargne actif pour une durée déterminée avec un motif spécifique",
+      *     @OA\Parameter(
+      *         name="compteId",
+      *         in="path",
+      *         required=true,
+      *         description="ID du compte (UUID)",
+      *         @OA\Schema(type="string", format="uuid")
+      *     ),
+      * @OA\RequestBody(
+       *         required=true,
+       *         @OA\JsonContent(
+       *             required={"dateDebutBlocage", "dureeBlocage", "motifBlocage"},
+       *             @OA\Property(property="dateDebutBlocage", type="string", format="date", description="Date de début du blocage (YYYY-MM-DD)", example="2025-10-29"),
+       *             @OA\Property(property="dureeBlocage", type="integer", description="Durée de blocage en jours", example=30, minimum=1, maximum=365),
+       *             @OA\Property(property="motifBlocage", type="string", description="Motif du blocage", example="Suspicion de fraude", maxLength=500)
+       *         )
+       *     ),
+      *     @OA\Response(
+      *         response=200,
+      *         description="Compte bloqué avec succès",
+      *         @OA\JsonContent(
+      *             @OA\Property(property="success", type="boolean", example=true),
+      *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
+      *             @OA\Property(
+      *                 property="data",
+      *                 type="object",
+      *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+      *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+      *                 @OA\Property(property="statut", type="string", example="bloque"),
+      *                 @OA\Property(property="dateBlocage", type="string", format="date-time", example="2025-10-27T12:00:00Z"),
+      *                 @OA\Property(property="dateFinBlocage", type="string", format="date-time", example="2025-11-26T12:00:00Z"),
+      *                 @OA\Property(property="motifBlocage", type="string", example="Suspicion de fraude")
+      *             )
+      *         )
+      *     ),
+      *     @OA\Response(
+      *         response=404,
+      *         description="Compte non trouvé",
+      *         @OA\JsonContent(
+      *             @OA\Property(property="success", type="boolean", example=false),
+      *             @OA\Property(property="message", type="string", example="Compte non trouvé")
+      *         )
+      *     ),
+      *     @OA\Response(
+      *         response=422,
+      *         description="Erreur de validation ou compte non éligible au blocage",
+      *         @OA\JsonContent(
+      *             @OA\Property(property="success", type="boolean", example=false),
+      *             @OA\Property(property="message", type="string", example="Seuls les comptes épargne peuvent être bloqués"),
+      *             @OA\Property(
+      *                 property="errors",
+      *                 type="object",
+      *                 @OA\Property(property="dureeBlocage", type="array", @OA\Items(type="string"), example={"La durée de blocage est obligatoire"}),
+      *                 @OA\Property(property="motifBlocage", type="array", @OA\Items(type="string"), example={"Le motif de blocage est obligatoire"})
+      *             )
+      *         )
+      *     )
+      * )
      */
     public function block(BlockAccountRequest $request, string $compteId)
     {
         $account = Account::notDeleted()->findOrFail($compteId);
         $validated = $request->validated();
 
+        // Vérifier que le compte est de type épargne et actif
+        if ($account->type !== 'epargne') {
+            return $this->errorResponse('Seuls les comptes épargne peuvent être bloqués', 422);
+        }
+
+        if ($account->status !== 'active') {
+            return $this->errorResponse('Seul un compte actif peut être bloqué', 422);
+        }
+
+        // Utiliser la date de début fournie ou la date actuelle
+        $blockedAt = isset($validated['dateDebutBlocage'])
+            ? \Carbon\Carbon::createFromFormat('Y-m-d', $validated['dateDebutBlocage'])->startOfDay()
+            : now();
+
         // Calculer la date d'expiration du blocage
-        $blockingExpiresAt = now()->addDays($validated['dureeBlocage']);
+        $blockingExpiresAt = $blockedAt->copy()->addDays($validated['dureeBlocage']);
 
         // Bloquer le compte
         $account->update([
             'status' => 'inactive',
-            'blocked_at' => now(),
+            'blocked_at' => $blockedAt,
             'blocking_expires_at' => $blockingExpiresAt,
             'blocking_reason' => $validated['motifBlocage'],
         ]);
 
-        return $this->successResponse([
-            'id' => $account->id,
-            'numeroCompte' => $account->account_number,
-            'statut' => 'bloque',
-            'dateBlocage' => $account->blocked_at->format('Y-m-d\TH:i:s\Z'),
-            'dateFinBlocage' => $account->blocking_expires_at->format('Y-m-d\TH:i:s\Z'),
-            'motifBlocage' => $account->blocking_reason,
-        ], 'Compte bloqué avec succès');
+        // Recharger l'account avec les nouvelles données
+        $account->refresh();
+
+        return $this->successResponse(
+            new AccountResource($account),
+            'Compte bloqué avec succès'
+        );
     }
 
     /**

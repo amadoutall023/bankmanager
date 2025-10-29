@@ -14,7 +14,7 @@ class AccountResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'numeroCompte' => $this->account_number,
             'titulaire' => $this->client->user->name,
@@ -28,5 +28,16 @@ class AccountResource extends JsonResource
                 'version' => 1,
             ],
         ];
+
+        // Ajouter les informations de blocage si le compte est bloqué
+        if ($this->status === 'inactive' && $this->blocked_at) {
+            $data['informationsBlocage'] = [
+                'dateDebutBlocage' => $this->blocked_at instanceof \Carbon\Carbon ? $this->blocked_at->format('Y-m-d\TH:i:s\Z') : $this->blocked_at,
+                'dateFinBlocage' => $this->blocking_expires_at instanceof \Carbon\Carbon ? $this->blocking_expires_at->format('Y-m-d\TH:i:s\Z') : $this->blocking_expires_at,
+                'motifBlocage' => $this->blocking_reason,
+            ];
+        }
+
+        return $data;
     }
 }
