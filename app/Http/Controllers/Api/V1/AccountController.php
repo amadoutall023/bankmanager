@@ -152,13 +152,13 @@ class AccountController extends Controller
         // Pour cette version simplifiée, on retourne tous les comptes sans authentification
         $query = Account::with('client.user')->notDeleted();
 
+        // Exclure les comptes bloqués et fermés par défaut
+        $query->whereNotIn('status', ['inactive', 'closed']);
+
         // Filtres
         if ($request->has('type') && in_array($request->type, ['epargne', 'cheque'])) {
             $query->where('type', $request->type);
         }
-
-        // Exclure les comptes bloqués et fermés par défaut
-        $query->whereNotIn('status', ['inactive', 'closed']);
 
         if ($request->has('statut')) {
             $statusMap = [
