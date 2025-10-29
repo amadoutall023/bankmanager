@@ -8,6 +8,19 @@ use App\Rules\SenegalesePhoneRule;
 class StoreAccountRequest extends FormRequest
 {
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Traiter client.id = 0 comme null (nouveau client)
+        if ($this->input('client.id') === 0) {
+            $this->merge([
+                'client' => array_merge($this->input('client', []), ['id' => null])
+            ]);
+        }
+    }
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool

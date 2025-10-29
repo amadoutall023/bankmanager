@@ -213,15 +213,26 @@ class AccountController extends Controller
      *     tags={"Comptes"},
      *     summary="Créer un nouveau compte bancaire",
      *     description="Crée un nouveau compte bancaire pour un client existant",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"client_id", "type"},
-     *             @OA\Property(property="client_id", type="integer", description="ID du client"),
-     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte"),
-     *             @OA\Property(property="balance", type="number", format="float", description="Solde initial", default=0)
-     *         )
-     *     ),
+     * @OA\RequestBody(
+      *         required=true,
+      *         @OA\JsonContent(
+      *             required={"type", "solde", "soldeInitial", "devise", "client"},
+      *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte", example="epargne"),
+      *             @OA\Property(property="solde", type="number", format="float", description="Solde initial", example=100000),
+      *             @OA\Property(property="soldeInitial", type="number", format="float", description="Solde initial", example=100000),
+      *             @OA\Property(property="devise", type="string", description="Devise", example="FCFA"),
+      *             @OA\Property(
+      *                 property="client",
+      *                 type="object",
+      *                 description="Informations du client",
+      *                 @OA\Property(property="id", type="integer", description="ID du client existant (0 ou null pour nouveau client)", example=0),
+      *                 @OA\Property(property="titulaire", type="string", description="Nom du titulaire", example="Cheikh Sy"),
+      *                 @OA\Property(property="email", type="string", format="email", description="Email du client", example="cheikh.sy@example.com"),
+      *                 @OA\Property(property="telephone", type="string", description="Numéro de téléphone", example="+221771114567"),
+      *                 @OA\Property(property="adresse", type="string", description="Adresse du client", example="Dakar, Sénégal")
+      *             )
+      *         )
+      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Compte créé avec succès",
@@ -267,7 +278,7 @@ class AccountController extends Controller
                 'role' => 'client',
                 'verification_code' => $verificationCode,
                 'verification_code_expires_at' => now()->addMinutes(15),
-                'is_verified' => false,
+                'is_verified' => "false",
             ]);
 
             $client = Client::create([
@@ -356,19 +367,19 @@ class AccountController extends Controller
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="titulaire", type="string", description="Nouveau nom du titulaire", example="Cheikh Sy"),
-     *             @OA\Property(
-     *                 property="informationsClient",
-     *                 type="object",
-     *                 description="Informations client à mettre à jour",
-     *                 @OA\Property(property="telephone", type="string", description="Nouveau numéro de téléphone", example="+221771234567"),
-     *                 @OA\Property(property="email", type="string", format="email", description="Nouvelle adresse email", example="cheikh.sy@example.com"),
-     *                 @OA\Property(property="password", type="string", description="Nouveau mot de passe", example="nouveauMotDePasse123")
-     *             )
-     *         )
-     *     ),
+      *         required=true,
+      *         @OA\JsonContent(
+      *             @OA\Property(property="titulaire", type="string", description="Nouveau nom du titulaire", example="Cheikh Sy"),
+      *             @OA\Property(
+      *                 property="informationsClient",
+      *                 type="object",
+      *                 description="Informations client à mettre à jour",
+      *                 @OA\Property(property="telephone", type="string", description="Nouveau numéro de téléphone", example="+221775168040"),
+      *                 @OA\Property(property="email", type="string", format="email", description="Nouvelle adresse email", example="nouveau.email@example.com"),
+      *                 @OA\Property(property="password", type="string", description="Nouveau mot de passe", example="MotDePasse@123!")
+      *             )
+      *         )
+      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Informations du compte mises à jour avec succès",
@@ -422,6 +433,7 @@ class AccountController extends Controller
      */
     public function update(UpdateAccountRequest $request, string $id)
     {
+        Log::info('AccountController update called', ['id' => $id, 'data' => $request->all()]);
         $account = Account::with('client.user')->notDeleted()->findOrFail($id);
         $validated = $request->validated();
 

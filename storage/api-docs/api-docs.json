@@ -9,10 +9,6 @@
         {
             "url": "http://localhost:8000/api/v1",
             "description": "Serveur de développement"
-        },
-        {
-            "url": "https://bankmanager-1-0u7i.onrender.com/api/v1",
-            "description": "Serveur de production"
         }
     ],
     "paths": {
@@ -122,27 +118,70 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "client_id",
-                                    "type"
+                                    "type",
+                                    "solde",
+                                    "soldeInitial",
+                                    "devise",
+                                    "client"
                                 ],
                                 "properties": {
-                                    "client_id": {
-                                        "description": "ID du client",
-                                        "type": "integer"
-                                    },
                                     "type": {
                                         "description": "Type de compte",
                                         "type": "string",
                                         "enum": [
                                             "epargne",
                                             "cheque"
-                                        ]
+                                        ],
+                                        "example": "epargne"
                                     },
-                                    "balance": {
+                                    "solde": {
                                         "description": "Solde initial",
                                         "type": "number",
                                         "format": "float",
-                                        "default": 0
+                                        "example": 100000
+                                    },
+                                    "soldeInitial": {
+                                        "description": "Solde initial",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100000
+                                    },
+                                    "devise": {
+                                        "description": "Devise",
+                                        "type": "string",
+                                        "example": "FCFA"
+                                    },
+                                    "client": {
+                                        "description": "Informations du client",
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID du client existant (0 ou null pour nouveau client)",
+                                                "type": "integer",
+                                                "example": 0
+                                            },
+                                            "titulaire": {
+                                                "description": "Nom du titulaire",
+                                                "type": "string",
+                                                "example": "Cheikh Sy"
+                                            },
+                                            "email": {
+                                                "description": "Email du client",
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "cheikh.sy@example.com"
+                                            },
+                                            "telephone": {
+                                                "description": "Numéro de téléphone",
+                                                "type": "string",
+                                                "example": "+221771114567"
+                                            },
+                                            "adresse": {
+                                                "description": "Adresse du client",
+                                                "type": "string",
+                                                "example": "Dakar, Sénégal"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
                                 },
                                 "type": "object"
@@ -385,18 +424,18 @@
                                             "telephone": {
                                                 "description": "Nouveau numéro de téléphone",
                                                 "type": "string",
-                                                "example": "+221771234567"
+                                                "example": "+221775168040"
                                             },
                                             "email": {
                                                 "description": "Nouvelle adresse email",
                                                 "type": "string",
                                                 "format": "email",
-                                                "example": "cheikh.sy@example.com"
+                                                "example": "nouveau.email@example.com"
                                             },
                                             "password": {
                                                 "description": "Nouveau mot de passe",
                                                 "type": "string",
-                                                "example": "nouveauMotDePasse123"
+                                                "example": "MotDePasse@123!"
                                             }
                                         },
                                         "type": "object"

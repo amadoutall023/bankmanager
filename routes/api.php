@@ -35,10 +35,7 @@ Route::get('/docs-json', function () {
 });
 
 // Routes API version 1 (simplifiées sans authentification)
-Route::prefix('v1')->middleware([
-    RatingMiddleware::class,
-    LoggingMiddleware::class
-])->group(function () {
+Route::prefix('v1')->group(function () {
 
     /**
      * Routes pour les comptes bancaires
@@ -66,6 +63,9 @@ Route::prefix('v1')->middleware([
 
     // Route de test pour créer des comptes
     Route::post('/test/comptes', [AccountController::class, 'store']);
+
+    // Route de test pour update
+    Route::patch('/test-update/{id}', [AccountController::class, 'update']);
 
 });
 

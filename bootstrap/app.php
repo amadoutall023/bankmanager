@@ -13,9 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'auth.api' => \App\Http\Middleware\AuthMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'logging' => \App\Http\Middleware\LoggingMiddleware::class,
+            'debug' => \App\Http\Middleware\DebugMiddleware::class,
         ]);
 
     })
