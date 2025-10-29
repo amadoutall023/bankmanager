@@ -97,11 +97,11 @@ class AccountController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/comptes",
-     *     tags={"Comptes"},
-     *     summary="Lister tous les comptes bancaires",
-     *     description="Récupère la liste de tous les comptes actifs avec possibilité de filtrage par type (épargne/chèque) et pagination. Les comptes bloqués et fermés sont exclus par défaut.",
-     *     @OA\Parameter(
+      *     path="/comptes",
+      *     tags={"Comptes"},
+      *     summary="Lister tous les comptes bancaires",
+      *     description="Récupère la liste de tous les comptes avec possibilité de filtrage et pagination",
+      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Numéro de page",
@@ -123,19 +123,19 @@ class AccountController extends Controller
      *         @OA\Schema(type="string", enum={"epargne", "cheque"})
      *     ),
      *     @OA\Parameter(
-     *         name="statut",
-     *         in="query",
-     *         description="Statut du compte",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"actif", "bloque", "ferme"})
-     *     ),
+      *         name="statut",
+      *         in="query",
+      *         description="Statut du compte",
+      *         required=false,
+      *         @OA\Schema(type="string")
+      *     ),
      *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Recherche par numéro de compte ou nom du titulaire",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
+      *         name="search",
+      *         in="query",
+      *         description="Recherche par numéro de compte ou nom du titulaire",
+      *         required=false,
+      *         @OA\Schema(type="string")
+      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Liste des comptes récupérée avec succès",
@@ -152,9 +152,6 @@ class AccountController extends Controller
         // Pour cette version simplifiée, on retourne tous les comptes sans authentification
         $query = Account::with('client.user')->notDeleted();
 
-        // Exclure les comptes bloqués et fermés par défaut
-        $query->whereNotIn('status', ['inactive', 'closed']);
-
         // Filtres
         if ($request->has('type') && in_array($request->type, ['epargne', 'cheque'])) {
             $query->where('type', $request->type);
@@ -167,12 +164,8 @@ class AccountController extends Controller
                 'ferme' => 'closed'
             ];
             if (array_key_exists($request->statut, $statusMap)) {
-                // Si un statut spécifique est demandé, on l'applique (remplace le filtre par défaut)
                 $query->where('status', $statusMap[$request->statut]);
             }
-        } else {
-            // Par défaut, exclure les comptes fermés (soft deleted) et bloqués expirés
-            $query->where('status', '!=', 'closed');
         }
 
         if ($request->has('search')) {
