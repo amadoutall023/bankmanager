@@ -26,9 +26,14 @@ use App\Traits\ApiResponseTrait;
  * )
  *
  * @OA\Server(
- *     url="http://localhost:8000/api/v1",
- *     description="Serveur de développement"
- * )
+  *     url="http://localhost:8000/api/v1",
+  *     description="Serveur de développement"
+  * )
+ *
+ * @OA\Server(
+  *     url="https://bankmanager-1-0u7i.onrender.com/api/v1",
+  *     description="Serveur de production"
+  * )
  *
  * @OA\Tag(
  *     name="Comptes",
