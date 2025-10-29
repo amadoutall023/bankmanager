@@ -170,6 +170,9 @@ class AccountController extends Controller
                 // Si un statut spécifique est demandé, on l'applique (remplace le filtre par défaut)
                 $query->where('status', $statusMap[$request->statut]);
             }
+        } else {
+            // Par défaut, exclure les comptes fermés (soft deleted) et bloqués expirés
+            $query->where('status', '!=', 'closed');
         }
 
         if ($request->has('search')) {
