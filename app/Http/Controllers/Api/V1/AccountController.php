@@ -17,6 +17,7 @@ use App\Http\Requests\StoreAccountRequest;
 use App\Http\Requests\UpdateAccountRequest;
 use App\Http\Requests\BlockAccountRequest;
 use App\Traits\ApiResponseTrait;
+use Twilio\Rest\Client as TwilioClient;
 
 /**
  * @OA\Info(
@@ -273,12 +274,18 @@ class AccountController extends Controller
         // Vérifier si le client existe ou doit être créé
         $clientId = $validated['client']['id'] ?? null;
         $client = null;
+        $isNewClient = false;
 
         if ($clientId) {
             // Utiliser le client existant
             $client = Client::findOrFail($clientId);
+            $user = $client->user;
+
+            // Pour un client existant, envoyer une notification par email et SMS
+            $this->sendAccountCreationNotification($user);
         } else {
             // Créer un nouveau client et utilisateur
+            $isNewClient = true;
             $generatedPassword = $this->generatePassword();
             $verificationCode = $this->generateVerificationCode();
 
@@ -298,10 +305,10 @@ class AccountController extends Controller
                 'user_id' => $user->id,
             ]);
 
-            // Envoyer email d'authentification
+            // Envoyer email d'authentification avec mot de passe
             $this->sendAuthenticationEmail($user, $generatedPassword);
 
-            // Envoyer SMS avec le code
+            // Envoyer SMS avec le code de vérification
             $this->sendVerificationSMS($user, $verificationCode);
         }
 
@@ -316,6 +323,11 @@ class AccountController extends Controller
             'balance' => $validated['solde'],
             'status' => 'active',
         ]);
+
+        // Envoyer notification de création de compte
+        if ($isNewClient) {
+            $this->sendAccountCreationConfirmation($user, $account);
+        }
 
         return $this->successResponse(
             new AccountResource($account),
@@ -680,12 +692,27 @@ class AccountController extends Controller
      */
     private function sendAuthenticationEmail(User $user, string $password): void
     {
-        // Pour cette implémentation simplifiée, on simule l'envoi
-        // En production, utiliser un service d'email comme Mailgun, SendGrid, etc.
-        Log::info("Email d'authentification envoyé à {$user->email} avec mot de passe: {$password}");
+        try {
+            // Configuration Twilio SendGrid pour les emails
+            $twilioClient = new TwilioClient(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
 
-        // Exemple avec Laravel Mail (à implémenter):
-        // Mail::to($user->email)->send(new AuthenticationEmail($user, $password));
+            $twilioClient->messages->create(
+                $user->email, // Utilisation de l'email comme "to" pour SendGrid via Twilio
+                [
+                    'from' => config('services.twilio.from_email'),
+                    'body' => "Bienvenue {$user->name}!\n\nVotre compte a été créé avec succès.\n\nInformations de connexion :\nEmail : {$user->email}\nMot de passe : {$password}\n\nVeuillez changer votre mot de passe après votre première connexion.\n\nCordialement,\nL'équipe BankManager"
+                ]
+            );
+
+            Log::info("Email d'authentification envoyé à {$user->email}");
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi de l'email d'authentification : " . $e->getMessage());
+            // Fallback : simulation de l'envoi
+            Log::info("Email d'authentification simulé envoyé à {$user->email} avec mot de passe: {$password}");
+        }
     }
 
     /**
@@ -693,11 +720,81 @@ class AccountController extends Controller
      */
     private function sendVerificationSMS(User $user, string $code): void
     {
-        // Pour cette implémentation simplifiée, on simule l'envoi
-        // En production, utiliser un service SMS comme Twilio, Africa's Talking, etc.
-        Log::info("SMS envoyé au {$user->phone} avec code: {$code}");
+        try {
+            $twilioClient = new TwilioClient(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
 
-        // Exemple avec un service SMS (à implémenter):
-        // $smsService->send($user->phone, "Votre code de vérification: {$code}");
+            $twilioClient->messages->create(
+                $user->phone,
+                [
+                    'from' => config('services.twilio.from_number'),
+                    'body' => "BankManager - Code de vérification : {$code}\n\nCe code expire dans 15 minutes."
+                ]
+            );
+
+            Log::info("SMS envoyé au {$user->phone} avec code: {$code}");
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi du SMS : " . $e->getMessage());
+            // Fallback : simulation de l'envoi
+            Log::info("SMS simulé envoyé au {$user->phone} avec code: {$code}");
+        }
+    }
+
+    /**
+     * Envoie une notification de création de compte pour client existant
+     */
+    private function sendAccountCreationNotification(User $user): void
+    {
+        try {
+            $twilioClient = new TwilioClient(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
+
+            // Envoi d'email via Twilio SendGrid
+            $twilioClient->messages->create(
+                $user->email,
+                [
+                    'from' => config('services.twilio.from_email'),
+                    'body' => "Bonjour {$user->name},\n\nUn nouveau compte bancaire a été créé pour vous dans notre système BankManager.\n\nVous recevrez bientôt vos informations de connexion.\n\nCordialement,\nL'équipe BankManager"
+                ]
+            );
+
+            Log::info("Notification de création de compte envoyé à {$user->email}");
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi de la notification : " . $e->getMessage());
+            // Fallback : simulation de l'envoi
+            Log::info("Notification de création de compte simulé envoyé à {$user->email}");
+        }
+    }
+
+    /**
+     * Envoie une confirmation de création de compte pour nouveau client
+     */
+    private function sendAccountCreationConfirmation(User $user, Account $account): void
+    {
+        try {
+            $twilioClient = new TwilioClient(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
+
+            // Envoi d'email via Twilio SendGrid
+            $twilioClient->messages->create(
+                $user->email,
+                [
+                    'from' => config('services.twilio.from_email'),
+                    'body' => "Félicitations {$user->name}!\n\nVotre compte bancaire a été créé avec succès.\n\nDétails du compte :\n- Numéro de compte : {$account->account_number}\n- Type : {$account->type}\n- Solde initial : {$account->balance} FCFA\n\nConservez précieusement ces informations.\n\nCordialement,\nL'équipe BankManager"
+                ]
+            );
+
+            Log::info("Confirmation de création de compte envoyé à {$user->email} pour le compte {$account->account_number}");
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi de la confirmation : " . $e->getMessage());
+            // Fallback : simulation de l'envoi
+            Log::info("Confirmation de création de compte simulé envoyé à {$user->email} pour le compte {$account->account_number}");
+        }
     }
 }
