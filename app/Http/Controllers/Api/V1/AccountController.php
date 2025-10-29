@@ -100,7 +100,7 @@ class AccountController extends Controller
      *     path="/comptes",
      *     tags={"Comptes"},
      *     summary="Lister tous les comptes bancaires",
-     *     description="Récupère la liste de tous les comptes avec possibilité de filtrage et pagination",
+     *     description="Récupère la liste de tous les comptes actifs avec possibilité de filtrage par type (épargne/chèque) et pagination. Les comptes bloqués et fermés sont exclus par défaut.",
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -157,6 +157,9 @@ class AccountController extends Controller
             $query->where('type', $request->type);
         }
 
+        // Exclure les comptes bloqués et fermés par défaut
+        $query->whereNotIn('status', ['inactive', 'closed']);
+
         if ($request->has('statut')) {
             $statusMap = [
                 'actif' => 'active',
@@ -164,6 +167,7 @@ class AccountController extends Controller
                 'ferme' => 'closed'
             ];
             if (array_key_exists($request->statut, $statusMap)) {
+                // Si un statut spécifique est demandé, on l'applique (remplace le filtre par défaut)
                 $query->where('status', $statusMap[$request->statut]);
             }
         }
