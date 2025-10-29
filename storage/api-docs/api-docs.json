@@ -22,7 +22,7 @@
                     "Comptes"
                 ],
                 "summary": "Lister tous les comptes bancaires",
-                "description": "Récupère la liste de tous les comptes actifs avec possibilité de filtrage par type (épargne/chèque) et pagination. Les comptes bloqués et fermés sont exclus par défaut.",
+                "description": "Récupère la liste de tous les comptes avec possibilité de filtrage et pagination",
                 "operationId": "868cd9fa67cc6866d7bcfe383522e88d",
                 "parameters": [
                     {
@@ -65,12 +65,7 @@
                         "description": "Statut du compte",
                         "required": false,
                         "schema": {
-                            "type": "string",
-                            "enum": [
-                                "actif",
-                                "bloque",
-                                "ferme"
-                            ]
+                            "type": "string"
                         }
                     },
                     {
