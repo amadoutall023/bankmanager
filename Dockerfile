@@ -66,7 +66,7 @@ RUN php artisan key:generate --force && \
     php artisan route:cache && \
     php artisan view:cache
 USER root
-
+RUN php artisan passport:keys --force
 # Copier le script d'entrée
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
