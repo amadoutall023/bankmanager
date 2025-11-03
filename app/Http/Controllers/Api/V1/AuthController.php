@@ -15,6 +15,14 @@ use App\Traits\ApiResponseTrait;
  *     name="Authentification",
  *     description="Gestion de l'authentification"
  * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     description="Token JWT obtenu via /auth/login"
+ * )
  */
 class AuthController extends Controller
 {
@@ -30,8 +38,8 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"email", "password"},
-     *             @OA\Property(property="email", type="string", format="email", description="Email de l'utilisateur"),
-     *             @OA\Property(property="password", type="string", description="Mot de passe")
+     *             @OA\Property(property="email", type="string", format="email", description="Email de l'utilisateur", example="admin@banque.example.com"),
+     *             @OA\Property(property="password", type="string", description="Mot de passe", example="Admin123!@#")
      *         )
      *     ),
      *     @OA\Response(
@@ -77,12 +85,8 @@ class AuthController extends Controller
             return $this->errorResponse('Identifiants invalides', 401);
         }
 
-        // Créer les tokens
-        $accessToken = $user->createToken('Access Token')->accessToken;
-        $refreshToken = $user->createToken('Refresh Token')->accessToken;
-
-        // Stocker le refresh token dans un cookie sécurisé
-        Cookie::queue('refresh_token', $refreshToken, 60 * 24 * 30, '/', null, true, true);
+        // Créer un token Passport
+        $token = $user->createToken('API Token')->accessToken;
 
         return $this->successResponse([
             'user' => [
@@ -91,8 +95,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
             ],
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
+            'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => 3600,
         ], 'Connexion réussie');

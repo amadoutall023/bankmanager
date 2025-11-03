@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'logging' => \App\Http\Middleware\LoggingMiddleware::class,
             'debug' => \App\Http\Middleware\DebugMiddleware::class,
+            'jwt.auth' => \App\Http\Middleware\JwtAuthMiddleware::class,
         ]);
 
     })

@@ -27,14 +27,14 @@ use Twilio\Rest\Client as TwilioClient;
  * )
  *
  * @OA\Server(
-  *     url="http://localhost:8000/api/v1",
-  *     description="Serveur de développement"
-  * )
+   *     url="http://localhost:8000/api/v1",
+   *     description="Serveur de développement"
+ * )
  *
  * @OA\Server(
-  *     url="https://bankmanager-1-0u7i.onrender.com/api/v1",
-  *     description="Serveur de production"
-  * )
+   *     url="https://bankmanager-1-0u7i.onrender.com/api/v1",
+   *     description="Serveur de production"
+ * )
  *
  * @OA\Tag(
  *     name="Comptes",
@@ -110,6 +110,7 @@ class AccountController extends Controller
       *     tags={"Comptes"},
       *     summary="Lister tous les comptes bancaires",
       *     description="Récupère la liste de tous les comptes avec possibilité de filtrage et pagination",
+      *     security={{"bearerAuth":{}}},
       *     @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -150,8 +151,44 @@ class AccountController extends Controller
      *         description="Liste des comptes récupérée avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="object", description="Collection des comptes avec pagination")
+     *             @OA\Property(property="message", type="string", example="Liste des comptes récupérée avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                         @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                         @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                         @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="cheque"),
+     *                         @OA\Property(property="solde", type="number", format="float", example=500000),
+     *                         @OA\Property(property="devise", type="string", example="FCFA"),
+     *                         @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                         @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, example="actif")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="pagination",
+     *                     type="object",
+     *                     @OA\Property(property="currentPage", type="integer", example=1),
+     *                     @OA\Property(property="totalPages", type="integer", example=5),
+     *                     @OA\Property(property="totalItems", type="integer", example=50),
+     *                     @OA\Property(property="itemsPerPage", type="integer", example=10),
+     *                     @OA\Property(property="hasNext", type="boolean", example=true),
+     *                     @OA\Property(property="hasPrevious", type="boolean", example=false)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="links",
+     *                     type="object",
+     *                     @OA\Property(property="self", type="string", example="http://localhost:8000/api/v1/comptes?page=1"),
+     *                     @OA\Property(property="next", type="string", example="http://localhost:8000/api/v1/comptes?page=2"),
+     *                     @OA\Property(property="first", type="string", example="http://localhost:8000/api/v1/comptes?page=1"),
+     *                     @OA\Property(property="last", type="string", example="http://localhost:8000/api/v1/comptes?page=5")
+     *                 )
+     *             )
      *         )
      *     )
      * )
@@ -227,22 +264,23 @@ class AccountController extends Controller
      *     tags={"Comptes"},
      *     summary="Créer un nouveau compte bancaire",
      *     description="Crée un nouveau compte bancaire pour un client existant",
+     *     security={{"bearerAuth":{}}},
      * @OA\RequestBody(
       *         required=true,
       *         @OA\JsonContent(
       *             required={"type", "solde", "soldeInitial", "devise", "client"},
-      *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte", example="epargne"),
-      *             @OA\Property(property="solde", type="number", format="float", description="Solde initial", example=100000),
-      *             @OA\Property(property="soldeInitial", type="number", format="float", description="Solde initial", example=100000),
+      *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte", example="cheque"),
+      *             @OA\Property(property="solde", type="number", format="float", description="Solde initial", example=500000),
+      *             @OA\Property(property="soldeInitial", type="number", format="float", description="Solde initial", example=500000),
       *             @OA\Property(property="devise", type="string", description="Devise", example="FCFA"),
       *             @OA\Property(
       *                 property="client",
       *                 type="object",
       *                 description="Informations du client",
-      *                 @OA\Property(property="id", type="integer", description="ID du client existant (0 ou null pour nouveau client)", example=0),
+      *                 @OA\Property(property="id", type="integer", description="ID du client existant (null pour nouveau client)", example=null),
       *                 @OA\Property(property="titulaire", type="string", description="Nom du titulaire", example="Cheikh Sy"),
       *                 @OA\Property(property="email", type="string", format="email", description="Email du client", example="cheikh.sy@example.com"),
-      *                 @OA\Property(property="telephone", type="string", description="Numéro de téléphone", example="+221771114567"),
+      *                 @OA\Property(property="telephone", type="string", description="Numéro de téléphone", example="+221771234567"),
       *                 @OA\Property(property="adresse", type="string", description="Adresse du client", example="Dakar, Sénégal")
       *             )
       *         )
@@ -252,8 +290,25 @@ class AccountController extends Controller
      *         description="Compte créé avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="object", description="Détails du compte")
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                 @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="cheque"),
+     *                 @OA\Property(property="solde", type="number", format="float", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                 @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, example="actif"),
+     *                 @OA\Property(
+     *                     property="metadata",
+     *                     type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -261,8 +316,16 @@ class AccountController extends Controller
      *         description="Erreur de validation",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="errors", type="object")
+     *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="type", type="array", @OA\Items(type="string"), example={"Le type de compte est obligatoire"}),
+     *                 @OA\Property(property="soldeInitial", type="array", @OA\Items(type="string"), example={"Le solde initial doit être supérieur ou égal à 10000"}),
+     *                 @OA\Property(property="client.titulaire", type="array", @OA\Items(type="string"), example={"Le nom du titulaire est requis"}),
+     *                 @OA\Property(property="client.email", type="array", @OA\Items(type="string"), example={"Cet email est déjà utilisé"}),
+     *                 @OA\Property(property="client.telephone", type="array", @OA\Items(type="string"), example={"Le téléphone doit être un numéro sénégalais valide"})
+     *             )
      *         )
      *     )
      * )
@@ -342,6 +405,7 @@ class AccountController extends Controller
      *     tags={"Comptes"},
      *     summary="Afficher un compte spécifique",
      *     description="Récupère les détails d'un compte bancaire par son ID",
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -354,8 +418,25 @@ class AccountController extends Controller
      *         description="Compte récupéré avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="object", description="Détails du compte")
+     *             @OA\Property(property="message", type="string", example="Compte récupéré avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                 @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="cheque"),
+     *                 @OA\Property(property="solde", type="number", format="float", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                 @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, example="actif"),
+     *                 @OA\Property(
+     *                     property="metadata",
+     *                     type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-19T11:15:00Z"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -384,6 +465,7 @@ class AccountController extends Controller
      *     tags={"Comptes"},
      *     summary="Modifier les informations d'un compte bancaire",
      *     description="Met à jour les informations du titulaire et/ou les informations client d'un compte bancaire existant",
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -403,6 +485,12 @@ class AccountController extends Controller
       *                 @OA\Property(property="email", type="string", format="email", description="Nouvelle adresse email", example="nouveau.email@example.com"),
       *                 @OA\Property(property="password", type="string", description="Nouveau mot de passe", example="MotDePasse@123!")
       *             )
+      *         )
+      *     ),
+     *     @OA\RequestBody(
+      *         required=true,
+      *         @OA\JsonContent(
+      *             @OA\Property(property="titulaire", type="string", description="Nouveau nom du titulaire", example="Cheikh Sy")
       *         )
       *     ),
      *     @OA\Response(
@@ -507,6 +595,7 @@ class AccountController extends Controller
       *     tags={"Comptes"},
       *     summary="Bloquer un compte bancaire",
       *     description="Bloque un compte bancaire de type épargne actif pour une durée déterminée avec un motif spécifique",
+      *     security={{"bearerAuth":{}}},
       *     @OA\Parameter(
       *         name="compteId",
       *         in="path",
@@ -610,6 +699,7 @@ class AccountController extends Controller
      *     tags={"Comptes"},
      *     summary="Fermer un compte bancaire",
      *     description="Effectue une suppression logique (soft delete) du compte bancaire en le marquant comme fermé",
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -693,25 +783,17 @@ class AccountController extends Controller
     private function sendAuthenticationEmail(User $user, string $password): void
     {
         try {
-            // Configuration Twilio SendGrid pour les emails
-            $twilioClient = new TwilioClient(
-                config('services.twilio.sid'),
-                config('services.twilio.token')
-            );
-
-            $twilioClient->messages->create(
-                $user->email, // Utilisation de l'email comme "to" pour SendGrid via Twilio
-                [
-                    'from' => config('services.twilio.from_email'),
-                    'body' => "Bienvenue {$user->name}!\n\nVotre compte a été créé avec succès.\n\nInformations de connexion :\nEmail : {$user->email}\nMot de passe : {$password}\n\nVeuillez changer votre mot de passe après votre première connexion.\n\nCordialement,\nL'équipe BankManager"
-                ]
-            );
+            // Utilisation de Mail facade de Laravel
+            Mail::raw("Bienvenue {$user->name}!\n\nVotre compte bancaire a été créé avec succès.\n\nVoici vos informations de connexion :\n\nLogin : {$user->email}\nMot de passe : {$password}\n\nVeuillez changer votre mot de passe après votre première connexion.\n\nCordialement,\nL'équipe BankManager", function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Bienvenue sur BankManager - Vos informations de connexion');
+            });
 
             Log::info("Email d'authentification envoyé à {$user->email}");
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'envoi de l'email d'authentification : " . $e->getMessage());
             // Fallback : simulation de l'envoi
-            Log::info("Email d'authentification simulé envoyé à {$user->email} avec mot de passe: {$password}");
+            Log::info("Email d'authentification simulé envoyé à {$user->email} avec login: {$user->email} et mot de passe: {$password}");
         }
     }
 
@@ -730,7 +812,7 @@ class AccountController extends Controller
                 $user->phone,
                 [
                     'from' => config('services.twilio.from_number'),
-                    'body' => "BankManager - Code de vérification : {$code}\n\nCe code expire dans 15 minutes."
+                    'body' => "BankManager - Code de vérification : {$code}\n\nCe code expire dans 15 minutes.\n\nVos informations de connexion :\nLogin : {$user->email}\nMot de passe : [Fourni par email]"
                 ]
             );
 
@@ -738,7 +820,7 @@ class AccountController extends Controller
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'envoi du SMS : " . $e->getMessage());
             // Fallback : simulation de l'envoi
-            Log::info("SMS simulé envoyé au {$user->phone} avec code: {$code}");
+            Log::info("SMS simulé envoyé au {$user->phone} avec code: {$code} et rappel des infos de connexion");
         }
     }
 
@@ -748,19 +830,11 @@ class AccountController extends Controller
     private function sendAccountCreationNotification(User $user): void
     {
         try {
-            $twilioClient = new TwilioClient(
-                config('services.twilio.sid'),
-                config('services.twilio.token')
-            );
-
-            // Envoi d'email via Twilio SendGrid
-            $twilioClient->messages->create(
-                $user->email,
-                [
-                    'from' => config('services.twilio.from_email'),
-                    'body' => "Bonjour {$user->name},\n\nUn nouveau compte bancaire a été créé pour vous dans notre système BankManager.\n\nVous recevrez bientôt vos informations de connexion.\n\nCordialement,\nL'équipe BankManager"
-                ]
-            );
+            // Utilisation de Mail facade de Laravel
+            Mail::raw("Bonjour {$user->name},\n\nUn nouveau compte bancaire a été créé pour vous dans notre système BankManager.\n\nVous recevrez bientôt vos informations de connexion.\n\nCordialement,\nL'équipe BankManager", function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Notification de création de compte - BankManager');
+            });
 
             Log::info("Notification de création de compte envoyé à {$user->email}");
         } catch (\Exception $e) {
@@ -776,25 +850,20 @@ class AccountController extends Controller
     private function sendAccountCreationConfirmation(User $user, Account $account): void
     {
         try {
-            $twilioClient = new TwilioClient(
-                config('services.twilio.sid'),
-                config('services.twilio.token')
-            );
+            // Générer un mot de passe pour ce client
+            $generatedPassword = $this->generatePassword();
 
-            // Envoi d'email via Twilio SendGrid
-            $twilioClient->messages->create(
-                $user->email,
-                [
-                    'from' => config('services.twilio.from_email'),
-                    'body' => "Félicitations {$user->name}!\n\nVotre compte bancaire a été créé avec succès.\n\nDétails du compte :\n- Numéro de compte : {$account->account_number}\n- Type : {$account->type}\n- Solde initial : {$account->balance} FCFA\n\nConservez précieusement ces informations.\n\nCordialement,\nL'équipe BankManager"
-                ]
-            );
+            // Utilisation de Mail facade de Laravel
+            Mail::raw("Félicitations {$user->name}!\n\nVotre compte bancaire a été créé avec succès.\n\nDétails du compte :\n- Numéro de compte : {$account->account_number}\n- Type : {$account->type}\n- Solde initial : {$account->balance} FCFA\n\nInformations de connexion :\n- Login : {$user->email}\n- Mot de passe : {$generatedPassword}\n\nConservez précieusement ces informations.\n\nCordialement,\nL'équipe BankManager", function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Confirmation de création de compte - BankManager');
+            });
 
             Log::info("Confirmation de création de compte envoyé à {$user->email} pour le compte {$account->account_number}");
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'envoi de la confirmation : " . $e->getMessage());
             // Fallback : simulation de l'envoi
-            Log::info("Confirmation de création de compte simulé envoyé à {$user->email} pour le compte {$account->account_number}");
+            Log::info("Confirmation de création de compte simulé envoyé à {$user->email} pour le compte {$account->account_number} avec rappel des infos de connexion");
         }
     }
 }

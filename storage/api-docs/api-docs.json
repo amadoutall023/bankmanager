@@ -90,10 +90,114 @@
                                             "example": true
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Liste des comptes récupérée avec succès"
                                         },
                                         "data": {
-                                            "description": "Collection des comptes avec pagination",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                            },
+                                                            "numeroCompte": {
+                                                                "type": "string",
+                                                                "example": "C00123456"
+                                                            },
+                                                            "titulaire": {
+                                                                "type": "string",
+                                                                "example": "Cheikh Sy"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "epargne",
+                                                                    "cheque"
+                                                                ],
+                                                                "example": "cheque"
+                                                            },
+                                                            "solde": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 500000
+                                                            },
+                                                            "devise": {
+                                                                "type": "string",
+                                                                "example": "FCFA"
+                                                            },
+                                                            "dateCreation": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-10-19T10:30:00Z"
+                                                            },
+                                                            "statut": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "actif",
+                                                                    "bloque",
+                                                                    "ferme"
+                                                                ],
+                                                                "example": "actif"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "currentPage": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "totalPages": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "totalItems": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "itemsPerPage": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "hasNext": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "hasPrevious": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "links": {
+                                                    "properties": {
+                                                        "self": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/v1/comptes?page=1"
+                                                        },
+                                                        "next": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/v1/comptes?page=2"
+                                                        },
+                                                        "first": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/v1/comptes?page=1"
+                                                        },
+                                                        "last": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/v1/comptes?page=5"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -102,7 +206,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -131,19 +240,19 @@
                                             "epargne",
                                             "cheque"
                                         ],
-                                        "example": "epargne"
+                                        "example": "cheque"
                                     },
                                     "solde": {
                                         "description": "Solde initial",
                                         "type": "number",
                                         "format": "float",
-                                        "example": 100000
+                                        "example": 500000
                                     },
                                     "soldeInitial": {
                                         "description": "Solde initial",
                                         "type": "number",
                                         "format": "float",
-                                        "example": 100000
+                                        "example": 500000
                                     },
                                     "devise": {
                                         "description": "Devise",
@@ -154,9 +263,9 @@
                                         "description": "Informations du client",
                                         "properties": {
                                             "id": {
-                                                "description": "ID du client existant (0 ou null pour nouveau client)",
+                                                "description": "ID du client existant (null pour nouveau client)",
                                                 "type": "integer",
-                                                "example": 0
+                                                "example": null
                                             },
                                             "titulaire": {
                                                 "description": "Nom du titulaire",
@@ -172,7 +281,7 @@
                                             "telephone": {
                                                 "description": "Numéro de téléphone",
                                                 "type": "string",
-                                                "example": "+221771114567"
+                                                "example": "+221771234567"
                                             },
                                             "adresse": {
                                                 "description": "Adresse du client",
@@ -200,10 +309,70 @@
                                             "example": true
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Compte créé avec succès"
                                         },
                                         "data": {
-                                            "description": "Détails du compte",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroCompte": {
+                                                    "type": "string",
+                                                    "example": "C00123456"
+                                                },
+                                                "titulaire": {
+                                                    "type": "string",
+                                                    "example": "Cheikh Sy"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "epargne",
+                                                        "cheque"
+                                                    ],
+                                                    "example": "cheque"
+                                                },
+                                                "solde": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 500000
+                                                },
+                                                "devise": {
+                                                    "type": "string",
+                                                    "example": "FCFA"
+                                                },
+                                                "dateCreation": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-19T10:30:00Z"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "actif",
+                                                        "bloque",
+                                                        "ferme"
+                                                    ],
+                                                    "example": "actif"
+                                                },
+                                                "metadata": {
+                                                    "properties": {
+                                                        "derniereModification": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-19T10:30:00Z"
+                                                        },
+                                                        "version": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -223,9 +392,57 @@
                                             "example": false
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Les données fournies sont invalides"
                                         },
                                         "errors": {
+                                            "properties": {
+                                                "type": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le type de compte est obligatoire"
+                                                    ]
+                                                },
+                                                "soldeInitial": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le solde initial doit être supérieur ou égal à 10000"
+                                                    ]
+                                                },
+                                                "client.titulaire": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le nom du titulaire est requis"
+                                                    ]
+                                                },
+                                                "client.email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Cet email est déjà utilisé"
+                                                    ]
+                                                },
+                                                "client.telephone": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Le téléphone doit être un numéro sénégalais valide"
+                                                    ]
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -234,7 +451,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/comptes/{id}": {
@@ -269,10 +491,70 @@
                                             "example": true
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Compte récupéré avec succès"
                                         },
                                         "data": {
-                                            "description": "Détails du compte",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "numeroCompte": {
+                                                    "type": "string",
+                                                    "example": "C00123456"
+                                                },
+                                                "titulaire": {
+                                                    "type": "string",
+                                                    "example": "Cheikh Sy"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "epargne",
+                                                        "cheque"
+                                                    ],
+                                                    "example": "cheque"
+                                                },
+                                                "solde": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 500000
+                                                },
+                                                "devise": {
+                                                    "type": "string",
+                                                    "example": "FCFA"
+                                                },
+                                                "dateCreation": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-19T10:30:00Z"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "actif",
+                                                        "bloque",
+                                                        "ferme"
+                                                    ],
+                                                    "example": "actif"
+                                                },
+                                                "metadata": {
+                                                    "properties": {
+                                                        "derniereModification": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-19T11:15:00Z"
+                                                        },
+                                                        "version": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -300,7 +582,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -385,7 +672,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "patch": {
                 "tags": [
@@ -601,7 +893,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/comptes/{compteId}/bloquer": {
@@ -776,7 +1073,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/auth/login": {
@@ -800,11 +1102,13 @@
                                     "email": {
                                         "description": "Email de l'utilisateur",
                                         "type": "string",
-                                        "format": "email"
+                                        "format": "email",
+                                        "example": "admin@banque.example.com"
                                     },
                                     "password": {
                                         "description": "Mot de passe",
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Admin123!@#"
                                     }
                                 },
                                 "type": "object"
@@ -1009,6 +1313,16 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Token JWT obtenu via /auth/login",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
             }
         }
     },

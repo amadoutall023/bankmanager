@@ -34,11 +34,21 @@ Route::get('/docs-json', function () {
     return response()->json(['error' => 'Documentation not found'], 404);
 });
 
-// Routes API version 1 (simplifiées sans authentification)
+// Routes API version 1
 Route::prefix('v1')->group(function () {
 
     /**
-     * Routes pour les comptes bancaires
+     * Routes d'authentification OAuth2
+     */
+    Route::prefix('auth')->group(function () {
+        Route::post('login', [AuthController::class, 'login']);
+        Route::post('refresh', [AuthController::class, 'refresh']);
+        Route::post('verify', [AuthController::class, 'verify']);
+        Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
+    });
+
+    /**
+     * Routes pour les comptes bancaires - PROTÉGÉES
      *
      * GET /api/v1/comptes - Lister tous les comptes (Admin: tous, Client: les siens)
      * POST /api/v1/comptes - Créer un compte (Admin seulement)
@@ -55,8 +65,28 @@ Route::prefix('v1')->group(function () {
      * - sort: tri (dateCreation, solde, titulaire)
      * - order: ordre (asc, desc)
      */
-    // Toutes les routes comptes sans restriction
-    Route::apiResource('comptes', AccountController::class);
+    // Routes comptes accessibles à tous les utilisateurs authentifiés (utilisant Passport)
+    Route::middleware(['auth:api'])->group(function () {
+        Route::get('comptes', [AccountController::class, 'index']);
+        Route::get('comptes/{id}', [AccountController::class, 'show']);
+
+        // Routes comptes réservées aux administrateurs
+        Route::middleware(['role:admin'])->group(function () {
+            Route::post('comptes', [AccountController::class, 'store']);
+            Route::patch('comptes/{id}', [AccountController::class, 'update']);
+            Route::delete('comptes/{id}', [AccountController::class, 'destroy']);
+            Route::post('comptes/{compteId}/bloquer', [AccountController::class, 'block']);
+        });
+    });
+
+    // Routes de test sans authentification pour les tests
+    Route::prefix('test')->group(function () {
+        Route::post('comptes', [AccountController::class, 'store']);
+        Route::get('comptes', [AccountController::class, 'index']);
+        Route::get('comptes/{id}', [AccountController::class, 'show']);
+        Route::patch('comptes/{id}', [AccountController::class, 'update']);
+        Route::delete('comptes/{id}', [AccountController::class, 'destroy']);
+    });
 
     // Route pour bloquer un compte
     Route::post('/comptes/{compteId}/bloquer', [AccountController::class, 'block']);

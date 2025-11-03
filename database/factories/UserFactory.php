@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'phone' => $this->faker->phoneNumber(),
             'address' => $this->faker->address(),
             'role' => $this->faker->randomElement(['admin', 'client']),
+            'is_verified' => "false",
         ];
     }
 

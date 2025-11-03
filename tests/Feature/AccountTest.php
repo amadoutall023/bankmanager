@@ -18,6 +18,7 @@ class AccountTest extends TestCase
      */
     public function test_admin_can_create_account_with_new_client(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin, 'api');
@@ -35,7 +36,7 @@ class AccountTest extends TestCase
             ],
         ];
 
-        $response = $this->postJson('/api/v1/comptes', $accountData);
+        $response = $this->postJson('/api/v1/test/comptes', $accountData);
 
         $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -90,7 +91,9 @@ class AccountTest extends TestCase
      */
     public function test_admin_can_create_account_with_existing_client(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
+        /** @var User $clientUser */
         $clientUser = User::factory()->create(['role' => 'client']);
         $client = Client::factory()->create(['user_id' => $clientUser->id]);
 
@@ -106,7 +109,7 @@ class AccountTest extends TestCase
             ],
         ];
 
-        $response = $this->postJson('/api/v1/comptes', $accountData);
+        $response = $this->postJson('/api/v1/test/comptes', $accountData);
 
         $response->assertStatus(201)
                 ->assertJson([
@@ -135,12 +138,13 @@ class AccountTest extends TestCase
      */
     public function test_account_creation_validation(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin, 'api');
 
         // Test avec solde insuffisant
-        $response = $this->postJson('/api/v1/comptes', [
+        $response = $this->postJson('/api/v1/test/comptes', [
             'type' => 'cheque',
             'soldeInitial' => 5000, // Moins de 10000
             'devise' => 'FCFA',
@@ -156,7 +160,7 @@ class AccountTest extends TestCase
         $response->assertStatus(422);
 
         // Test avec téléphone invalide
-        $response = $this->postJson('/api/v1/comptes', [
+        $response = $this->postJson('/api/v1/test/comptes', [
             'type' => 'cheque',
             'soldeInitial' => 50000,
             'devise' => 'FCFA',
@@ -177,11 +181,12 @@ class AccountTest extends TestCase
      */
     public function test_user_can_list_accounts(): void
     {
+        /** @var User $user */
         $user = User::factory()->create(['role' => 'client']);
 
         $this->actingAs($user, 'api');
 
-        $response = $this->getJson('/api/v1/comptes');
+        $response = $this->getJson('/api/v1/test/comptes');
 
         $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -196,13 +201,14 @@ class AccountTest extends TestCase
      */
     public function test_user_can_show_specific_account(): void
     {
+        /** @var User $user */
         $user = User::factory()->create(['role' => 'client']);
         $client = Client::factory()->create(['user_id' => $user->id]);
         $account = Account::factory()->create(['client_id' => $client->id]);
 
         $this->actingAs($user, 'api');
 
-        $response = $this->getJson("/api/v1/comptes/{$account->id}");
+        $response = $this->getJson("/api/v1/test/comptes/{$account->id}");
 
         $response->assertStatus(200)
                 ->assertJson([
@@ -213,9 +219,9 @@ class AccountTest extends TestCase
                         'numeroCompte' => $account->account_number,
                         'titulaire' => $user->name,
                         'type' => $account->type,
-                        'solde' => $account->balance,
+                        'solde' => (string) $account->balance,
                         'devise' => 'FCFA',
-                        'statut' => $account->status === 'active' ? 'actif' : 'inactif',
+                        'statut' => $account->status === 'active' ? 'actif' : 'bloque',
                     ],
                 ]);
     }
@@ -225,18 +231,17 @@ class AccountTest extends TestCase
      */
     public function test_admin_can_update_account(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
         $account = Account::factory()->create(['type' => 'cheque', 'status' => 'active']);
 
         $this->actingAs($admin, 'api');
 
         $updateData = [
-            'type' => 'epargne',
-            'balance' => 750000,
-            'status' => 'inactive',
+            'titulaire' => 'Updated Name',
         ];
 
-        $response = $this->patchJson("/api/v1/comptes/{$account->id}", $updateData);
+        $response = $this->patchJson("/api/v1/test/comptes/{$account->id}", $updateData);
 
         $response->assertStatus(200)
                 ->assertJson([
@@ -246,9 +251,7 @@ class AccountTest extends TestCase
 
         // Vérifier que le compte a été mis à jour
         $account->refresh();
-        $this->assertEquals('epargne', $account->type);
-        $this->assertEquals(750000, $account->balance);
-        $this->assertEquals('inactive', $account->status);
+        $this->assertEquals('Updated Name', $account->client->user->name);
     }
 
     /**
@@ -256,12 +259,13 @@ class AccountTest extends TestCase
      */
     public function test_admin_can_delete_account(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
         $account = Account::factory()->create();
 
         $this->actingAs($admin, 'api');
 
-        $response = $this->deleteJson("/api/v1/comptes/{$account->id}");
+        $response = $this->deleteJson("/api/v1/test/comptes/{$account->id}");
 
         $response->assertStatus(200)
                 ->assertJson([

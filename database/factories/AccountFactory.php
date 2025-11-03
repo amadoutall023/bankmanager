@@ -18,7 +18,7 @@ class AccountFactory extends Factory
     {
         return [
             'id' => (string) \Illuminate\Support\Str::uuid(),
-            'client_id' => \App\Models\Client::inRandomOrder()->first()->id,
+            'client_id' => \App\Models\Client::factory(),
             'account_number' => 'C' . fake()->unique()->numberBetween(10000000, 99999999),
             'type' => fake()->randomElement(['epargne', 'cheque']),
             'balance' => fake()->randomFloat(2, 0, 1000000),

@@ -20,7 +20,7 @@ class AdminSeeder extends Seeder
             'phone' => '+221771234567',
             'address' => 'Dakar, Sénégal',
             'role' => 'admin',
-            'is_verified' => true,
+            'is_verified' => "true",
         ]);
 
         \App\Models\Admin::create([

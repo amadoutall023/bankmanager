@@ -42,7 +42,7 @@ class ClientSeeder extends Seeder
                 'phone' => $clientData['phone'],
                 'address' => $clientData['address'],
                 'role' => 'client',
-                'is_verified' => true,
+                'is_verified' => "true",
             ]);
 
             \App\Models\Client::create([
