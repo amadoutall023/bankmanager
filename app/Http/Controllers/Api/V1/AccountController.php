@@ -18,7 +18,7 @@ use App\Http\Requests\UpdateAccountRequest;
 use App\Http\Requests\BlockAccountRequest;
 use App\Traits\ApiResponseTrait;
 use Twilio\Rest\Client as TwilioClient;
-
+    
 /**
  * @OA\Info(
  *     title="BankManager API",
